@@ -1,4 +1,5 @@
 import { db } from '../database';
+import * as admin from 'firebase-admin';
 
 
 export const updateListingRoute = {
@@ -7,8 +8,16 @@ export const updateListingRoute = {
   handler: async (request, h) => {
     const { id } = request.params;
     const { name, description, price } = request.payload;
-    const userId = '12345'
-
+    const token = request.headers.authorization?.split(' ')[1];
+    console.log('Token:', token);
+    if (!token) {
+      return h.response({ error: 'Authorization token is missing or malformed' }).code(400);
+    }
+    console.log('Token:', token);
+    // Attempt to verify the token
+    const user = await admin.auth().verifyIdToken(token);
+    const userId = user.user_id;
+    console.log('Verified User ID:', user.user_id);
     await db.query(`
       UPDATE listings
       SET name = ?, description = ?, price = ?
